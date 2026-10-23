@@ -37,16 +37,5 @@ app.post('/webhook', handleIncomingMessage({
   chatId: config.telegramChatId
 }));
 
-// Export for Vercel Serverless Functions
+// Export the Express app for Vercel
 export default app;
-
-// For local development
-if (process.env.NODE_ENV !== 'production') {
-  const port = config.port || 3000;
-  app.listen(port, () => {
-    console.log(`[INFO] ${new Date().toISOString()} - Server listening on port ${port}`);
-    console.log(`[INFO] ${new Date().toISOString()} - Webhook endpoints ready:`);
-    console.log(`[INFO] ${new Date().toISOString()} -   GET  /webhook - Verification`);
-    console.log(`[INFO] ${new Date().toISOString()} -   POST /webhook - Messages`);
-  });
-}
