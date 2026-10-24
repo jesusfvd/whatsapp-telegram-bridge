@@ -5,7 +5,11 @@ import { handleWebhookVerification, VerificationRequest } from '../src/webhookVa
 import { handleIncomingMessage } from '../src/messageReceiver';
 
 // Load configuration
+console.log('[DEBUG] Loading configuration...');
 const config = loadConfig();
+console.log('[DEBUG] Configuration loaded successfully');
+console.log('[DEBUG] Bot Token:', config.telegramBotToken ? '✓ SET' : '✗ MISSING');
+console.log('[DEBUG] Chat ID:', config.telegramChatId ? '✓ SET' : '✗ MISSING');
 
 // Initialize Express app
 const app = express();
@@ -22,14 +26,22 @@ app.get('/', (req: Request, res: Response) => {
 
 // Webhook verification endpoint (GET)
 app.get('/webhook', (req: Request<{}, {}, {}, VerificationRequest>, res: Response) => {
+  console.log('[DEBUG] GET /webhook - Verification request received');
   handleWebhookVerification(req, res, config.whatsappVerifyToken);
 });
 
 // Message reception endpoint (POST)
-app.post('/webhook', handleIncomingMessage({
-  botToken: config.telegramBotToken,
-  chatId: config.telegramChatId
-}));
+app.post('/webhook', (req: Request, res: Response) => {
+  console.log('[DEBUG] POST /webhook - Message received');
+  console.log('[DEBUG] Request body:', JSON.stringify(req.body, null, 2));
+  
+  const handler = handleIncomingMessage({
+    botToken: config.telegramBotToken,
+    chatId: config.telegramChatId
+  });
+  
+  handler(req, res);
+});
 
 // Export for Vercel Serverless
 export default app;
