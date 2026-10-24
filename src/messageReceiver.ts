@@ -91,13 +91,18 @@ export function handleIncomingMessage(telegramConfig: TelegramConfig) {
     req: Request<{}, {}, WhatsAppWebhookPayload>,
     res: Response
   ): Promise<void> => {
+    console.log('[DEBUG] handleIncomingMessage called');
+    
     // Respond immediately with 200 OK to acknowledge receipt
     // Requirement 2.2
     res.status(200).send('OK');
+    console.log('[DEBUG] Sent 200 OK response');
     
     // Extract messages array from the webhook payload
     // Requirements: 2.3, 2.4
+    console.log('[DEBUG] Extracting messages from payload...');
     const messages = req.body.entry?.[0]?.changes?.[0]?.value?.messages;
+    console.log('[DEBUG] Messages found:', messages ? messages.length : 0);
     
     // Handle case where messages array is missing or empty
     // Requirement 2.5
@@ -111,9 +116,15 @@ export function handleIncomingMessage(telegramConfig: TelegramConfig) {
     const from = messages[0].from;
     const messageText = messages[0].text.body;
     
+    console.log('[DEBUG] Message from:', from);
+    console.log('[DEBUG] Message text:', messageText);
+    console.log('[DEBUG] Starting async processing...');
+    
     // Process message asynchronously with error isolation
     // Requirements: 2.6, 7.1, 7.2, 7.3, 7.4, 7.5
     processMessageSafely(from, messageText, telegramConfig);
+    
+    console.log('[DEBUG] Async processing initiated');
   };
 }
 
@@ -136,13 +147,23 @@ async function processMessageSafely(
   messageText: string,
   telegramConfig: TelegramConfig
 ): Promise<void> {
+  console.log('[DEBUG] processMessageSafely started');
+  
   try {
+    console.log('[DEBUG] Step 1: Analyzing content...');
+    
     // Step 1: Analyze message content to extract structured information
     // Requirement 7.1
     const structuredInfo = analyzeContent(messageText);
+    console.log('[DEBUG] Content analyzed:', JSON.stringify(structuredInfo, null, 2));
+    
+    console.log('[DEBUG] Step 2: Formatting report...');
     
     // Step 2: Format structured information as journalistic report
     const formattedReport = formatPeriodicReport(structuredInfo);
+    console.log('[DEBUG] Report formatted. Length:', formattedReport.length);
+    
+    console.log('[DEBUG] Step 3: Sending to Telegram...');
     
     // Step 3: Send formatted report to Telegram
     // Requirement 7.2
@@ -157,6 +178,10 @@ async function processMessageSafely(
     // Requirements: 2.6, 7.3, 7.4, 7.5
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error(`[ERROR] ${new Date().toISOString()} - Failed to process message from ${from}: ${errorMessage}`);
+    
+    if (error instanceof Error && error.stack) {
+      console.error('[ERROR] Stack trace:', error.stack);
+    }
     
     // Do not throw - allow server to continue processing subsequent messages
     // Requirement 7.5
