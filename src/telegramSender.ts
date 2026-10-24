@@ -53,6 +53,11 @@ export async function sendToTelegram(
   message: string,
   config: TelegramConfig
 ): Promise<void> {
+  console.log('[DEBUG] sendToTelegram called');
+  console.log('[DEBUG] Chat ID:', config.chatId);
+  console.log('[DEBUG] Bot Token (first 10 chars):', config.botToken.substring(0, 10) + '...');
+  console.log('[DEBUG] Message length:', message.length);
+  
   // Construct Telegram API URL with bot token
   // Requirement 5.8
   const url = `https://api.telegram.org/bot${config.botToken}/sendMessage`;
@@ -65,7 +70,11 @@ export async function sendToTelegram(
     parse_mode: 'HTML'
   };
 
+  console.log('[DEBUG] Payload:', JSON.stringify(payload, null, 2));
+
   try {
+    console.log('[DEBUG] Sending request to Telegram API...');
+    
     // Send POST request to Telegram API
     // Requirement 5.2
     const response = await fetch(url, {
@@ -76,6 +85,9 @@ export async function sendToTelegram(
       body: JSON.stringify(payload)
     });
 
+    console.log('[DEBUG] Response status:', response.status);
+    console.log('[DEBUG] Response ok:', response.ok);
+
     // Handle error responses by throwing enriched error
     // Requirements: 5.7, 7.6
     if (!response.ok) {
@@ -84,9 +96,11 @@ export async function sendToTelegram(
       try {
         const errorData = await response.json() as TelegramErrorResponse;
         errorDescription = errorData.description || errorDescription;
+        console.log('[ERROR] Telegram API error response:', JSON.stringify(errorData, null, 2));
       } catch {
         // If parsing error response fails, use generic message
         errorDescription = await response.text() || errorDescription;
+        console.log('[ERROR] Telegram API error text:', errorDescription);
       }
 
       // Throw error with status code and description
@@ -101,6 +115,8 @@ export async function sendToTelegram(
     console.log('[INFO] Message sent to Telegram successfully');
     
   } catch (error) {
+    console.log('[ERROR] Exception caught in sendToTelegram:', error);
+    
     // Re-throw enriched errors as-is
     if (error instanceof Error && error.message.includes('Telegram API error')) {
       throw error;
